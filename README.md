@@ -1,70 +1,129 @@
-# Getting Started with Create React App
+<div align="center">
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# 🛸 Rick and Morty · Explorer de Dimensiones y Residentes
 
-## Available Scripts
+[![React](https://img.shields.io/badge/React-17.0.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/es/docs/Web/JavaScript)
+[![API](https://img.shields.io/badge/API-The_Rick_and_Morty_API-97ce4c?style=for-the-badge)](https://rickandmortyapi.com/)
+[![Axios](https://img.shields.io/badge/Axios-0.26.1-5A29E4?style=for-the-badge&logo=axios&logoColor=white)](https://axios-http.com/)
+[![License](https://img.shields.io/badge/Licencia-MIT-purple?style=for-the-badge)](#)
 
-In the project directory, you can run:
+<p align="center">
+  <strong>Aplicación web en React para explorar las dimensiones, planetas y personajes del multiverso de Rick and Morty.</strong><br>
+  Carga aleatoria de ubicaciones, buscador inteligente y fichas interactivas con estado de vida, especie y episodio de origen.
+</p>
 
-### `npm start`
+[✨ Características](#-características-principales) •
+[🏛️ Arquitectura](#-arquitectura-de-componentes) •
+[🌐 Consumo de API](#-consumo-de-api-y-flujo-de-datos) •
+[🚀 Guía de Instalación](#-guía-de-instalación-y-ejecución) •
+[🤖 Créditos](#-créditos--asistencia-técnica)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+</div>
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## 📌 Visión General
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+**Rick and Morty Explorer** es una SPA (Single Page Application) desarrollada con **React** y **Axios** que consume la API oficial de [The Rick and Morty API](https://rickandmortyapi.com/).
 
-### `npm run build`
+Al ingresar, la aplicación selecciona una dimensión o planeta aleatorio entre las 126 ubicaciones del multiverso, renderiza sus metadatos (nombre, tipo, dimensión) y realiza peticiones concurrentes para listar las tarjetas de todos sus residentes.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## ✨ Características Principales
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+* 🎲 **Ubicación Aleatoria de Inicio:** Carga dinámica de un ID aleatorio del 1 al 126 al montar el componente.
+* 🔍 **Buscador con Autocompletado y Manejo de Errores:** Búsqueda por nombre de dimensión con protección ante búsquedas sin resultados (`404 catch`).
+* 👾 **Tarjetas de Residentes:**
+  * Indicador de estado vital (`Alive`, `Dead`, `unknown`).
+  * Especie y planeta de origen.
+  * Extracción limpia del **episodio de su primera aparición** (cálculo de ID de episodio sin bucles innecesarios).
+* 🛡️ **Anti-Hanging en Cero Residentes:** Manejo de estado para planetas deshabitados sin quedar atrapado en pantallas de carga infinitas.
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 🏛️ Arquitectura de Componentes
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```text
+rick-and-morty/
+├── public/
+│   ├── favicon.ico
+│   ├── index.html
+│   └── manifest.json
+├── src/
+│   ├── assets/
+│   │   └── img/
+│   │       └── rick.jpg               # Avatar para caja de búsqueda
+│   ├── components/
+│   │   ├── CharacterInfo.js           # Especie, origen y primer episodio
+│   │   ├── FindByLocation.js          # Orquestador principal de estado
+│   │   ├── LocationInfo.js            # Tarjeta de metadatos de la dimensión
+│   │   ├── Residents.js               # Tarjeta individual del personaje
+│   │   ├── ResidentsList.js           # Contenedor flex/grid de residentes
+│   │   └── SearchBox.js               # Formulario de búsqueda con validación
+│   ├── helpers/
+│   │   └── locationHelpers.js         # Generador de ID y parser de URLs
+│   ├── App.css                        # Estilos multiverso y responsive
+│   ├── App.js                         # Contenedor raíz
+│   └── index.js                       # Renderizado en DOM
+├── package.json
+└── README.md
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 🌐 Consumo de API y Flujo de Datos
 
-## Learn More
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 👤 Usuario
+    participant App as ⚡ FindByLocation
+    participant Search as 🔍 SearchBox
+    participant API as 🌐 Rick and Morty API
+    participant Cards as 🗃️ ResidentsList
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+    App->>API: GET /location/{randomId} (1 - 126)
+    API-->>App: JSON Ubicación (name, dimension, residents[])
+    App->>Cards: Envía array de URLs de residentes
+    Cards->>API: GET /character/{id} (Por cada residente)
+    API-->>Cards: JSON Personaje (foto, status, episode[])
+    User->>Search: Escribe nombre y pulsa Enter / Buscar
+    Search->>API: GET /location/?name={query}
+    API-->>App: Actualiza estado con nueva dimensión
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## 🚀 Guía de Instalación y Ejecución
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/Luaz2021/rick-and-morty.git
+cd rick-and-morty
+```
 
-### Analyzing the Bundle Size
+### 2. Instalar dependencias
+Compatible con Node.js 16, 18, 20 y 24+:
+```bash
+npm install --legacy-peer-deps
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 3. Iniciar la aplicación
+```bash
+npm start
+```
+Abre automáticamente [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🤖 Créditos & Asistencia Técnica
 
-### Advanced Configuration
+* **Desarrollo & Lógica Principal:** Alexander Martínez ([@Luaz2021](https://github.com/Luaz2021))
+* **QA Tester, Auditoría de Código, Refactorización & Documentación README:** Generado por **Agent-Nova-Gemini-Assistant** ✨ (Copiloto y Asistente Técnico Autónomo basado en Google Gemini).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+<div align="center">
+  <sub>Desarrollado con fines educativos y de portfolio profesional · 2026</sub>
+</div>
